@@ -83,8 +83,8 @@
             <h2 style="text-align:center">PHP is big!</h2>
             <ul>
                 <li>Many of the most popular open source projects use PHP</li>
-                <li>Over 70% of all websites in the world use PHP</li>
-                <li>WordPress runs on 20% of all websites, Drupal 2%</li>
+                <li><a href="http://w3techs.com/technologies/overview/programming_language/all">PHP is used on 70%+</a> of all websites in the world</li>
+                <li><a href="http://w3techs.com/technologies/overview/content_management/all">WordPress runs on 15%+, Drupal 2%+</a> of all websites</li>
                 <li>Neither provides a clearly separated storage API</li>
             </ul>
         </div>
@@ -122,7 +122,7 @@
             <h2>PHPCR and Magnolia</h2>
             <ul>
                 <li>Magnolia uses Jackrabbit for storage</li>
-                <li>By installing a single jar, Magnolia can expose the Jackrabbit Davex API</li>
+                <li>Magnolia can expose the Jackrabbit Davex API</li>
                 <li>As a result its possible to read/write from/into Magnolia via the Jackalope PHPCR implementation</li>
             </ul>
         </div>
@@ -131,8 +131,8 @@
             <h2>How does PHP support help Magnolia?</h2>
             <ul>
                 <li>Integrate PHP applications into Magnolia</li>
-                <li>Enable 3rd parties with a preference for PHP to reuse Magnolia content</li>
-                <li>Use Magnolia for content administration and PHP for content displaying</li>
+                <li>Marketing team with PHP know how can use Magnolia content</li>
+                <li>Magnolia for content administration, PHP for content displaying</li>
                 <li>...</li>
             </ul>
         </div>
@@ -506,19 +506,11 @@ Tests: 1102, Assertions: 6251, Incomplete: 14, Skipped: 128.
 
         <div class="slide" style="text-align:center">
             <h1>Doctrine PHPCR ODM</h1>
-            <h1><a href="http://www.doctrine-project.org/projects/phpcr_odm">www.doctrine-project.org/projects/phpcr_odm</a></h1>
-        </div>
-
-        <div class="slide" style="text-align:center">
-            <h2>PHP Content Repository API + Doctrine Object Document Mapper API</h2>
-            <ul>
-                <li>Map plain php objects to phpcr data</li>
-                <li>Supports the PHPCR concepts like children and references</li>
-            </ul>
+            <h2><a href="http://www.doctrine-project.org/projects/phpcr-odm.html">doctrine-project.org/projects/phpcr-odm.html</a></h2>
         </div>
 
         <div class="slide" style="text-align:left">
-            <h2>Doctrine ODM</h2>
+            <h2>PHP Content Repository API + Doctrine Object Document Mapper API</h2>
             <ul>
                 <li>Object to Document mapper</li>
                 <li>Persist your Objects as PHPCR nodes</li>
@@ -662,7 +654,7 @@ Tests: 1102, Assertions: 6251, Incomplete: 14, Skipped: 128.
                 $query->setLimit($limit);
                 $query->setOffset($offset);
 
-                $collection = $dm->getDocumentsByQuery($query);
+                $coll = $dm->getDocumentsByQuery($query);
             </pre>
         </div>
 
@@ -679,7 +671,7 @@ Tests: 1102, Assertions: 6251, Incomplete: 14, Skipped: 128.
                     ->setMaxResults(10)
                     ->execute();
 
-                $collection = $dm->getDocumentsByQuery($qb->getQuery());
+                $coll = $dm->getDocumentsByQuery($qb->getQuery());
             </pre>
         </div>
 
@@ -703,7 +695,7 @@ Tests: 1102, Assertions: 6251, Incomplete: 14, Skipped: 128.
             } catch (\Exception $e) {
                 $utx->rollback();
 
-                // the DocumentManager is now in an inconsistent state
+                // DocumentManager is in an inconsistent state
                 unset($dm)
             }
             </pre>
@@ -831,25 +823,25 @@ Tests: 1102, Assertions: 6251, Incomplete: 14, Skipped: 128.
 
               class MagnoliaMapper extends DocumentClassMapper
               {
-                public $templateMap;
+                public $tplMap;
 
-                public function getClassName(DM $dm, NI $n, $c = null)
+                public function getClassName(DM $dm,NI $n,$c=null)
                 {
                   $c = parent::getClassName($dm, $n, $c);
                   if ('Doctrine\ODM\PHPCR\Document\Generic' !== $c
                     && !$n->hasNode('MetaData')) { return $c; }
 
-                  $meta = $n->getNode('MetaData');
-                  if ($meta->hasProperty('mgnl:template')) {
-                    $tpl = $meta->getPropertyValue('mgnl:template')]);
+                  $m = $n->getNode('MetaData');
+                  if ($m->hasProperty('mgnl:template')) {
+                    $tpl = $m->getPropertyValue('mgnl:template')]);
                   }
 
-                  return isset($tpl) && isset($this->templateMap[$tpl)
-                    ? $this->templateMap[$tpl] : $c;
+                  return isset($tpl) && isset($this->tplMap[$tpl)
+                    ? $this->tplMap[$tpl] : $c;
                 }
 
-                public function writeMetadata(DM $dm, NI $n, $c) {..}
-                public function validateClassName(DM $dm, $d, $c) {..}
+                public function writeMetadata(DM $dm,NI $n,$c){..}
+                public function validateClassName(DM $dm,$d,$c){..}
             </pre>
         </div>
 
@@ -870,9 +862,10 @@ Tests: 1102, Assertions: 6251, Incomplete: 14, Skipped: 128.
         <div class="slide">
             <h2>Magnolia and PHPCR Demo Time!</h2>
             <ol>
-                <li><a href="http://http://cmf.lo/magnolia_edit">Reading content</a> from Magnolia via PHPCR</li>
-                <li><a href="http://http://cmf.lo/magnolia_odm">Reading content</a> from Magnolia via PHPCR ODM</li>
-                <li><a href="http://http://cmf.lo/magnolia/about/subsection-articles/article">Editing content</a> in Magnolia via <a href="http://createjs.org">create.js</a></li>
+                <li>Results of our one day <a href="http://wiki.magnolia-cms.com/display/WIKI/Magnolia+and+PHPCR">hackday in April</a></li>
+                <li><a href="http://cmf.lo/app_dev.php/magnolia/about/subsection-articles/article" target="_new">Reading content</a> from Magnolia via PHPCR</li>
+                <li><a href="http://cmf.lo/app_dev.php/magnolia_odm" target="_new">Reading content</a> from Magnolia via PHPCR ODM</li>
+                <li><a href="http://cmf.lo/app_dev.php/magnolia_edit" target="_new">Editing content</a> in Magnolia via <a href="http://createjs.org">create.js</a></li>
             </ol>
         </div>
 
