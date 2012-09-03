@@ -79,26 +79,14 @@
             <h1><a href="http://phpcr.github.com">phpcr.github.com</a></h1>
         </div>
 
-        <div class="slide" style="text-align:center">
-            <h2>Data in a CMS is mostly unstructured</h2>
-            <h2>RDBMS are not a good fit, hurray for NoSQL</h2>
-            <h2><img src="square_in_a_circle.png" alt="like fitting a square into a circle" /></h2>
-        </div>
-
-        <div class="slide" style="text-align:center">
-            <h2>CMS often organize content as a tree/graph</h2>
-            <h2>Most NoSQL not a good fit, hurray for Graph DBs</h2>
-            <h2><img src="content_graph.png" alt="content graph" /></h2>
-        </div>
-
-        <div class="slide" style="text-align:center">
-            <h2>CMS should be able to store content versions</h2>
-            <h2><img src="versioning.png" alt="multiple versions" /></h2>
-        </div>
-
-        <div class="slide" style="text-align:center">
-            <h2>Complexity shouldn't overwhelm developers</h2>
-            <p style="font-size:1.3em;">Need a solution that can scale both from small to large projects and we rather not reinvent the wheel!</p>
+        <div class="slide">
+            <h2 style="text-align:center">PHP is big!</h2>
+            <ul>
+                <li>Many of the most popular open source projects use PHP</li>
+                <li>Over 70% of all websites in the world use PHP</li>
+                <li>WordPress runs on 20% of all websites, Drupal 2%</li>
+                <li>Neither provides a clearly separated storage API</li>
+            </ul>
         </div>
 
         <div class="slide">
@@ -126,6 +114,25 @@
                     </ul>
                 </li>
                 <li>Midgard2 PHPCR</li>
+                <li>...</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>PHPCR and Magnolia</h2>
+            <ul>
+                <li>Magnolia uses Jackrabbit for storage</li>
+                <li>By installing a single jar, Magnolia can expose the Jackrabbit Davex API</li>
+                <li>As a result its possible to read/write from/into Magnolia via the Jackalope PHPCR implementation</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>How does PHP support help Magnolia?</h2>
+            <ul>
+                <li>Integrate PHP applications into Magnolia</li>
+                <li>Enable 3rd parties with a preference for PHP to reuse Magnolia content</li>
+                <li>Use Magnolia for content administration and PHP for content displaying</li>
                 <li>...</li>
             </ul>
         </div>
@@ -497,38 +504,376 @@ Tests: 1102, Assertions: 6251, Incomplete: 14, Skipped: 128.
             </pre>
         </div>
 
-        <div class="slide">
+        <div class="slide" style="text-align:center">
             <h1>Doctrine PHPCR ODM</h1>
+            <h1><a href="http://www.doctrine-project.org/projects/phpcr_odm">www.doctrine-project.org/projects/phpcr_odm</a></h1>
+        </div>
+
+        <div class="slide" style="text-align:center">
+            <h2>PHP Content Repository API + Doctrine Object Document Mapper API</h2>
             <ul>
-                <li>Object - Document mapper to map plain php objects to phpcr data</li>
-                <li>Supports the phcpr concepts like children and references</li>
-                <li><a href="http://cmf.symfony.com/slides/doctrine-phpcr-odm.html">See the phpcr-odm slides</a></li>
+                <li>Map plain php objects to phpcr data</li>
+                <li>Supports the PHPCR concepts like children and references</li>
+            </ul>
+        </div>
+
+        <div class="slide" style="text-align:left">
+            <h2>Doctrine ODM</h2>
+            <ul>
+                <li>Object to Document mapper</li>
+                <li>Persist your Objects as PHPCR nodes</li>
+                <li>This is <em>not</em> active record</li>
+                <li>But you explicitly register plain php class instances with the manager</li>
+                <li>Metadata to map from database to class properties
+                    <ul>
+                        <li>YAML, XML or php annotations</li>
+                        <li>No need for interfaces or extending a base class</li>
+                    </ul>
+                </li>
             </ul>
         </div>
 
         <div class="slide">
-            <h1>Conclusions</h1>
+            <h2>Document class</h2>
+            <pre class="brush: php">
+                namespace Foo;
+
+                use Doctrine\ODM\PHPCR\Mapping as PHPCR;
+
+                /** @PHPCR\Document */
+                class Bar
+                {
+                    /** @PHPCR\Id */
+                    public $id;
+
+                    /**
+                     * presence of this annotation changes default id strategy
+                     * to "parent and name" strategy
+                     * @PHPCR\ParentDocument
+                     */
+                    public $parent;
+
+                    /** @PHPCR\Nodename */
+                    public $nodename;
+
+                    /** @PHPCR\String */
+                    public $text;
+                }
+            </pre>
         </div>
 
         <div class="slide">
-            <h2>Not all data fits well in PHPCR/JCR</h2>
+            <h2>CRUD API</h2>
+            <pre class="brush: php">
+                // Create
+                $document = new Foo\Bar();
+                $document->parent = $dm->find(null, '/');
+                $document->nodename = 'test';
+                $document->text = 'Test text';
+                $dm->persist($document);
+                $dm->flush();
+
+                // Read
+                $document = $dm->find(null, '/test');
+
+                // Update
+                $document->text = 'foo!';
+                $dm->flush();
+
+                // Remove
+                $dm->remove($document);
+                $dm->flush();
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Traversal and References</h2>
+            <pre class="brush: php">
+                /** @PHPCR\Document */
+                class Bar
+                {
+                    /**
+                     * Map the child node named the-logo
+                     * @PHPCR\Child(name="the-logo")
+                     */
+                    public $logo;
+
+                    /**
+                     * All child nodes starting with "a".
+                     * @PHPCR\Children(filter="a*")
+                     */
+                    public $children;
+
+                    /** @PHPCR\ReferenceOne */
+                    public $reference;
+
+                    /** @PHPCR\Referrers */
+                    public $referrers;
+
+                    ...
+                }
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Versioning API: basics</h2>
+            <pre class="brush: php">
+                // @Document(versionable="simple")
+                $document = $dm->find(null, $id);
+
+                // create a new version
+                $dm->checkpoint($document);
+
+                // get latest 2 entries from history
+                $history = $dm->getAllLinearVersions($document, 2);
+                // returns array with version name and creation date of each version
+
+                // get a document in an old state
+                $version = reset($history);
+                $pre = $dm->findVersionByName(null, $id, $version['versionname']);
+                echo $pre->text;
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Versioning API: restore and delete</h2>
+            <pre class="brush: php">
+                $pre = $dm->findVersionByName(null, $id, $versionname);
+
+                // restore this old version
+                $dm->restoreVersion($pre, true);
+
+                // delete a version from the history
+                // (i.e. to remove illegal content from a wiki-like page)
+                $illegal = $dm->findVersionByName(null, $id, $v);
+                $dm->deleteVersion($illegal);
+            </pre>
+        </div>
+
+        <!-- TODO: version labels once this is implemented -->
+
+        <div class="slide">
+            <h2>Search via SQL2 API</h2>
+            <pre class="brush: php">
+                $sql = "SELECT * FROM [nt:unstructured]
+                    WHERE [nt:unstructured].text = 'foo!'
+                    ORDER BY [nt:unstructured].title";
+                $query = $dm->createQuery($sql, 'JCR-SQL2');
+                $query->setLimit($limit);
+                $query->setOffset($offset);
+
+                $collection = $dm->getDocumentsByQuery($query);
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Search via the QueryBuilder</h2>
+            <pre class="brush: php">
+                $qb = $dm->createQueryBuilder();
+                $factory = $qb->getQOMFactory();
+
+                // SELECT * FROM nt:unstructured WHERE name NOT IS NULL
+                $qb->select($factory->selector('nt:unstructured'))
+                    ->where($factory->propertyExistance('name'))
+                    ->setFirstResult(10)
+                    ->setMaxResults(10)
+                    ->execute();
+
+                $collection = $dm->getDocumentsByQuery($qb->getQuery());
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Transactions</h2>
+            <pre class="brush: php">
+            $workspace = $dm->getPhpcrSession()->getWorkspace();
+            $utx = $workspace->getTransactionManager();
+            $utx->begin();
+
+            try {
+                $utx->begin();
+
+                // do stuff with the DocumentManager
+                $dm->flush();
+
+                // do more stuff with the DocumentManager
+                $dm->flush();
+
+                $utx->commit();
+            } catch (\Exception $e) {
+                $utx->rollback();
+
+                // the DocumentManager is now in an inconsistent state
+                unset($dm)
+            }
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Translation</h2>
+            <pre class="brush: php">
+                /** @PHPCR\Document(translator="attribute") */
+                class Article
+                {
+                    /**
+                     * The language this document currently is in
+                     * @PHPCR\Locale
+                     */
+                    public $locale;
+
+                    /**
+                     * Untranslated property
+                     * @PHPCR\Date
+                     */
+                    public $publishDate;
+
+                    /**
+                     * Translated property
+                     * @PHPCR\String(translated=true)
+                     */
+                    public $topic;
+
+                    /**
+                     * Language specific image
+                     * @PHPCR\Binary(translated=true)
+                     */
+                    public $image;
+                }
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Storing translations</h2>
+            <pre class="brush: php">
+                $article = new Article();
+                $article->topic = 'bonjour';
+                $dm->persist($article);
+                $dm->bindTranslation($article, 'fr');
+
+                $article->topic = 'hello';
+                $dm->bindTranslation($article, 'en');
+
+                $article->topic = 'hello';
+                // ODM tracks the locale change and
+                // does an implicit bindTranslation() call on flush()
+                $article->locale = 'de';
+
+                // flushes french, english and german versions into the database
+                $dm->flush();
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Loading translations</h2>
+            <pre class="brush: php">
+                $article = $dm->findTranslation(null, '/test', 'fr');
+                echo $article->topic; // 'bonjour'
+                $article = $dm->findTranslation(null, '/test', 'en');
+                echo $article->topic; // 'hello'
+
+                $article->topic = 'hello you';
+                // use the @Locale field if set, otherwise language document was loaded in
+                $dm->flush();
+
+                // load in default language
+                $article = $dm->find(null, '/test');
+
+                $locales = $dm->getLocalesFor($article);
+                var_dump($locales); // en, fr
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Translation</h2>
             <ul>
-                <li>For example aggregation is better done in an RDBMS</li>
-                <li>Store web store product description in PHPCR/JCR</li>
-                <li>Store web store inventory and orders in RDBMS</li>
+                <li>Attribute strategy: Store translations into namespaced properties of same node</li>
+                <li>Child strategy: Create namespaced child for each language</li>
+                <li>Translate any type of field except references or children</li>
+                <li>Limited to one instance of the document, which is updated on findTranslation</li>
             </ul>
         </div>
 
-        <div class="slide" style="text-align:center">
-            <h2>Door swings both ways, so remember</h2>
-            <h2><img src="square_in_a_circle.png" alt="like fitting a square into a circle" /></h2>
+        <div class="slide">
+            <h2>Document repository (optional)</h2>
+            <pre class="brush: php">
+                namespace Foo;
+
+                use Doctrine\ODM\PHPCR\DocumentRepository;
+                use Doctrine\ODM\PHPCR\Id\RepositoryIdInterface;
+
+                /** @PHPCR\Document(repositoryClass="Foo\BarRepository") */
+                class Bar
+                {
+                    /** @PHPCR\Id(strategy="repository") */
+                    public $id;
+                    ...
+
+                class BarRepository
+                    extends DocumentRepository
+                    implements RepositoryIdInterface
+                {
+                    public function generateId(Bar $document)
+                    {
+                        return '/'.$document->getName();
+                    }
+                }
+            </pre>
         </div>
 
-        <div class="slide" style="text-align:center">
-            <h1>Play with it today!</h1>
-            <h2><a href="https://github.com/phpcr/phpcr/blob/master/doc/Tutorial.md">PHPCR Tutorial</a></h2><br/>
-            <h1>See it in action!</h1>
-            <h2><a href="https://github.com/symfony-cmf/cmf-sandbox">Symfony2 CMF sandbox</a></h2>
+        <div class="slide">
+            <h2>Node to Document class mapping (optional)</h2>
+            <pre class="brush: php">
+              namespace Foo;
+
+              use Doctrine\ODM\PHPCR\DocumentClassMapper;
+              use Doctrine\ODM\PHPCR\DocumentManager AS DM;
+              use PHPCR\NodeInterface AS NI;
+
+              class MagnoliaMapper extends DocumentClassMapper
+              {
+                public $templateMap;
+
+                public function getClassName(DM $dm, NI $n, $c = null)
+                {
+                  $c = parent::getClassName($dm, $n, $c);
+                  if ('Doctrine\ODM\PHPCR\Document\Generic' !== $c
+                    && !$n->hasNode('MetaData')) { return $c; }
+
+                  $meta = $n->getNode('MetaData');
+                  if ($meta->hasProperty('mgnl:template')) {
+                    $tpl = $meta->getPropertyValue('mgnl:template')]);
+                  }
+
+                  return isset($tpl) && isset($this->templateMap[$tpl)
+                    ? $this->templateMap[$tpl] : $c;
+                }
+
+                public function writeMetadata(DM $dm, NI $n, $c) {..}
+                public function validateClassName(DM $dm, $d, $c) {..}
+            </pre>
+        </div>
+
+        <div class="slide">
+            <h2>Enabling Davex in Magnolia</h2>
+            <ol>
+                <li>Download <a href="http://sourceforge.net/projects/magnolia/files/">Magnolia CE</a></li>
+                <li>Download the <a href="http://ci.magnolia-cms.com/job/forge_magnolia-module-jackrabbit-davex/info.magnolia.davex$magnolia-module-jackrabbit-davex/">Magnolia Jackrabbit-Davex Module</a></li>
+                <li>Drop all JARs from this archive into <pre>apache-tomcat-6.0.32/webapps/magnoliaAuthor/WEB-INF/lib/</pre></li>
+                <li>Remove open file limitations; f.e. in bash, this will be <pre>ulimit -n 5000</pre></li>
+                <li>Start Magnolia with <pre>./magnolia_control.sh start && tail -f ../logs/catalina.out</pre></li>
+                <li>Check that the installation is complete by logging into the admin and frontend downloading any relevant modules</li>
+                <li>Ensure the following is set in the configuration under <pre>"server->IPConfig->allow-all->methods"</pre><pre>GET,POST,PROPFIND,PUT,DELETE,REPORT,HEAD</pre></li>
+                <li>See also the <a hreg="http://documentation.magnolia-cms.com">official Magnolia documentation</a></li>
+            </ol>
+        </div>
+
+        <div class="slide">
+            <h2>Magnolia and PHPCR Demo Time!</h2>
+            <ol>
+                <li><a href="http://http://cmf.lo/magnolia_edit">Reading content</a> from Magnolia via PHPCR</li>
+                <li><a href="http://http://cmf.lo/magnolia_odm">Reading content</a> from Magnolia via PHPCR ODM</li>
+                <li><a href="http://http://cmf.lo/magnolia/about/subsection-articles/article">Editing content</a> in Magnolia via <a href="http://createjs.org">create.js</a></li>
+            </ol>
         </div>
 
         <div class="slide">
@@ -605,16 +950,6 @@ Tests: 1102, Assertions: 6251, Incomplete: 14, Skipped: 128.
                     </td>
                 </tr>
             </table>
-        </div>
-
-        <div class="slide" style="text-align:center">
-            <h2>Several companies and organisations are investing into the effort</h2>
-            <h2><img src="phpcr_companies.png" alt="Liip, Ideato, Nemein, IKS" /></h2>
-        </div>
-
-        <div class="slide" style="text-align:center">
-            <h2>Many projects have expressed interest</h2>
-            <h2><img src="phpcr_projects.png" alt="Symfony2 CMF, Midgard, Typo3, Nooku, ezPublish, Drupal" /></h2>
         </div>
 
         <div class="slide">
